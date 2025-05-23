@@ -1,3 +1,5 @@
+// services/vehicle.js
+
 const grpc = require('@grpc/grpc-js');
 const protoLoader = require('@grpc/proto-loader');
 const path = require('path');
@@ -18,8 +20,8 @@ function simulateVehicle(id) {
   let lon = getRandom(-180, 180);
 
   const call = client.Track((error, response) => {
-    if (error) console.error(error);
-    else console.log(`Comando recebido por ${id}:`, response.message);
+    if (error) console.error(`Erro no veículo ${id}:`, error);
+    else console.log(`Comando recebido pelo veículo ${id}:`, response.message);
   });
 
   setInterval(() => {
@@ -30,16 +32,18 @@ function simulateVehicle(id) {
 
     const update = {
       id,
-      latitude: lat,
-      longitude: lon,
+      latitude: parseFloat(lat.toFixed(6)),
+      longitude: parseFloat(lon.toFixed(6)),
       speed,
       status
     };
 
     console.log(`[Veículo ${id}] Enviando posição:`, update);
     call.write(update);
-  }, 3000);
+  }, 2000); // Atualiza a cada 2 segundos
 }
 
+// Simule quantos veículos quiser
 simulateVehicle("VEICULO_01");
 simulateVehicle("VEICULO_02");
+simulateVehicle("VEICULO_03");

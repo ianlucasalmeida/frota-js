@@ -3,10 +3,7 @@ syntax = "proto3";
 package frota;
 
 service FrotaService {
-  // Streaming bidirecional para monitoramento em tempo real
   rpc Track(stream VehicleUpdate) returns (stream Command) {}
-
-  // Chamada unária para estimar tempo de entrega
   rpc EstimateDelivery(EstimateRequest) returns (EstimateResponse) {}
 }
 
@@ -14,8 +11,8 @@ message VehicleUpdate {
   string id = 1;
   double latitude = 2;
   double longitude = 3;
-  int32 speed = 4;        // km/h
-  string status = 5;      // ex: "moving", "stopped"
+  int32 speed = 4;
+  string status = 5;
 }
 
 message Command {
@@ -29,5 +26,6 @@ message EstimateRequest {
 }
 
 message EstimateResponse {
-  string estimated_time = 1; // ex: "30 minutos"
+  string estimated_time = 1;
+  string reasons = 2;
 }

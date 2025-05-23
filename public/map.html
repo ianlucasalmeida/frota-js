@@ -4,7 +4,10 @@
   <meta charset="UTF-8" />
   <title>Simulação de Tráfego</title>
   <style>
-    body { margin: 0; font-family: sans-serif; }
+    body {
+      margin: 0;
+      font-family: sans-serif;
+    }
     #map {
       width: 100vw;
       height: 100vh;
@@ -18,33 +21,115 @@
       border-radius: 50%;
       position: absolute;
     }
+    #controls {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      background: white;
+      padding: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      z-index: 10;
+      border-radius: 6px;
+    }
+
+    /* Estilo da notificação */
+    #notification {
+      visibility: hidden;
+      min-width: 250px;
+      background: #d32f2f;
+      color: #fff;
+      text-align: center;
+      border-radius: 4px;
+      padding: 12px;
+      position: fixed;
+      z-index: 9999;
+      left: 50%;
+      bottom: 30px;
+      transform: translateX(-50%);
+      opacity: 0;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      font-size: 14px;
+    }
+
+    #notification.show {
+      visibility: visible;
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    #notification.success {
+      background: #2e7d32;
+    }
   </style>
 </head>
 <body>
+  <div id="controls">
+    <label for="vehicleId">ID do Veículo:</label><br />
+    <input type="text" id="vehicleId" placeholder="ex: VEICULO_01" /><br /><br />
+    <button onclick="startTracking()">Iniciar Veículo</button>
+  </div>
+
+  <!-- Notificação -->
+  <div id="notification"></div>
+
   <div id="map"></div>
+
   <script src="/socket.io/socket.io.js"></script>
   <script>
-    const map = document.getElementById('map');
+    let vehicleId = "";
+
+    function showNotification(message, type = "error") {
+      const notification = document.getElementById("notification");
+      notification.textContent = message;
+      notification.className = "show " + (type === "success" ? "success" : "");
+      setTimeout(() => {
+        notification.classList.remove("show");
+      }, 3000);
+    }
+
+    function startTracking() {
+      const input = document.getElementById("vehicleId");
+      vehicleId = input.value.trim();
+
+      if (!vehicleId) {
+        showNotification("Por favor, informe um ID para o veículo.");
+        return;
+      }
+
+      showNotification(`Veículo "${vehicleId}" iniciado!`, "success");
+    }
+
+    const map = document.getElementById("map");
     const socket = io();
 
-    map.addEventListener('mousemove', (e) => {
+    map.addEventListener("mousemove", (e) => {
+      if (!vehicleId) {
+        showNotification("Por favor, informe o ID do veículo antes de mover o mouse.");
+        return;
+      }
+
       const rect = map.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
 
-      const dot = document.createElement('div');
-      dot.className = 'dot';
-      dot.style.left = x + 'px';
-      dot.style.top = y + 'px';
+      // Desenha o ponto na tela
+      const dot = document.createElement("div");
+      dot.className = "dot";
+      dot.style.left = `${x}px`;
+      dot.style.top = `${y}px`;
       map.appendChild(dot);
 
-      // Enviar dados via WebSocket para backend
-      socket.emit('mouseMove', {
-        id: 'VEICULO_01',
-        lat: y / window.innerHeight,
-        lon: x / window.innerWidth,
+      // Simula posição relativa ao mapa (0 a 1)
+      const lat = y / window.innerHeight;
+      const lon = x / window.innerWidth;
+
+      // Envia dados via WebSocket para o backend
+      socket.emit("mouseMove", {
+        id: vehicleId,
+        lat: lat,
+        lon: lon,
         speed: 60,
-        status: 'moving'
+        status: "moving"
       });
     });
   </script>

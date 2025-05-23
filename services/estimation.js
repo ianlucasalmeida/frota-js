@@ -7,27 +7,27 @@ const packageDefinition = protoLoader.loadSync(PROTO_PATH);
 const protoDescriptor = grpc.loadPackageDefinition(packageDefinition);
 const frotaProto = protoDescriptor.frota;
 
-// Servidor gRPC para estimativas
 const server = new grpc.Server();
-
 server.addService(frotaProto.FrotaService.service, {
   EstimateDelivery: (call, callback) => {
     const request = call.request;
     const vehicleId = request.vehicle_id;
-
-    // Aqui você pode usar dados reais do veiculo armazenados
-    // Neste exemplo vai ter valores fictícios
-    const distance = Math.sqrt(
-      Math.pow(request.destination_lat - (-23.56), 2) +
-      Math.pow(request.destination_lon - (-46.62), 2)
-    );
-
-    const speedKmH = 60;
-    const timeMinutes = Math.round((distance * 100 / speedKmH) * 60);
-
-    const response = {
-      estimated_time: `${timeMinutes} minutos`
+    const vehicle = {
+      id: vehicleId,
+      latitude: -23.56,
+      longitude: -46.62,
+      speed: 60
     };
+
+    const distanceDeg = Math.hypot(
+      request.destination_lat - vehicle.latitude,
+      request.destination_lon - vehicle.longitude
+    );
+    const timeMinutes = Math.round((distanceDeg * 111 / vehicle.speed) * 60);
+
+    const response = new frotaProto.EstimateResponse();
+    response.estimated_time = `${timeMinutes} minutos`;
+    response.reasons = "";
 
     console.log(`[Estimativa] ${vehicleId} -> ${response.estimated_time}`);
     callback(null, response);
