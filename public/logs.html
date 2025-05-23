@@ -2,24 +2,591 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Logs do Sistema</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Logs do Sistema - Frota JS</title>
   <style>
-    body { font-family: monospace; padding: 1em; background: black; color: white; }
-    #logs { height: 90vh; overflow-y: scroll; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Fira Code', 'JetBrains Mono', 'Monaco', 'Consolas', monospace;
+      background: #0a0a0a;
+      color: #e0e0e0;
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    .header {
+      background: rgba(20, 20, 20, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid #333;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .back-button {
+      background: rgba(102, 126, 234, 0.2);
+      border: 1px solid #667eea;
+      color: #667eea;
+      padding: 0.6rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .back-button:hover {
+      background: rgba(102, 126, 234, 0.3);
+      transform: translateX(-3px);
+    }
+
+    .title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #48bb78;
+      animation: pulse 2s infinite;
+    }
+
+    .control-button {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #e0e0e0;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.3s ease;
+      font-family: inherit;
+    }
+
+    .control-button:hover {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .control-button.active {
+      background: rgba(102, 126, 234, 0.3);
+      border-color: #667eea;
+      color: #667eea;
+    }
+
+    .logs-container {
+      height: calc(100vh - 80px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .logs-content {
+      height: 100%;
+      overflow-y: auto;
+      padding: 1rem 2rem;
+      background: #0a0a0a;
+      position: relative;
+    }
+
+    .log-entry {
+      margin-bottom: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      border-radius: 4px;
+      border-left: 3px solid transparent;
+      transition: all 0.3s ease;
+      line-height: 1.4;
+      font-size: 0.9rem;
+      word-wrap: break-word;
+      animation: slideInRight 0.3s ease-out;
+    }
+
+    .log-entry:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .log-entry.info {
+      border-left-color: #4a9eff;
+      color: #b3d9ff;
+    }
+
+    .log-entry.warning {
+      border-left-color: #fbbf24;
+      color: #fde68a;
+    }
+
+    .log-entry.error {
+      border-left-color: #ef4444;
+      color: #fca5a5;
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    .log-entry.success {
+      border-left-color: #10b981;
+      color: #a7f3d0;
+    }
+
+    .log-timestamp {
+      color: #9ca3af;
+      font-size: 0.8rem;
+      margin-right: 0.75rem;
+    }
+
+    .log-level {
+      display: inline-block;
+      padding: 0.2rem 0.5rem;
+      border-radius: 3px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-right: 0.75rem;
+      min-width: 60px;
+      text-align: center;
+    }
+
+    .log-level.info { background: rgba(74, 158, 255, 0.2); color: #4a9eff; }
+    .log-level.warning { background: rgba(251, 191, 36, 0.2); color: #fbbf24; }
+    .log-level.error { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+    .log-level.success { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+
+    .loading-message {
+      text-align: center;
+      color: #9ca3af;
+      padding: 2rem;
+      font-style: italic;
+    }
+
+    .loading-dots {
+      display: inline-block;
+      animation: loading 1.5s infinite;
+    }
+
+    .stats-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(20, 20, 20, 0.95);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid #333;
+      padding: 0.75rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+      color: #9ca3af;
+    }
+
+    .stats-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .filter-bar {
+      background: rgba(30, 30, 30, 0.95);
+      border-bottom: 1px solid #333;
+      padding: 0.75rem 2rem;
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .filter-label {
+      font-size: 0.85rem;
+      color: #9ca3af;
+    }
+
+    .filter-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+    }
+
+    .filter-checkbox input[type="checkbox"] {
+      accent-color: #667eea;
+    }
+
+    .scroll-to-bottom {
+      position: absolute;
+      bottom: 100px;
+      right: 2rem;
+      background: rgba(102, 126, 234, 0.9);
+      color: white;
+      border: none;
+      padding: 0.75rem;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.2rem;
+      transition: all 0.3s ease;
+      opacity: 0;
+      pointer-events: none;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .scroll-to-bottom.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .scroll-to-bottom:hover {
+      background: #667eea;
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    @keyframes loading {
+      0%, 20% { opacity: 0; }
+      50% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+
+    @keyframes slideInRight {
+      from {
+        opacity: 0;
+        transform: translateX(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    /* Scrollbar personalizada */
+    .logs-content::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .logs-content::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .logs-content::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+    }
+
+    .logs-content::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    @media (max-width: 768px) {
+      .header, .logs-content, .stats-bar, .filter-bar {
+        padding-left: 1rem;
+        padding-right: 1rem;
+      }
+
+      .controls {
+        gap: 0.5rem;
+      }
+
+      .control-button {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
+      }
+
+      .filter-bar {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+
+      .log-entry {
+        font-size: 0.85rem;
+        padding: 0.4rem 0.6rem;
+      }
+
+      .scroll-to-bottom {
+        bottom: 80px;
+        right: 1rem;
+      }
+    }
   </style>
 </head>
 <body>
-  <h1>Logs em Tempo Real</h1>
-  <pre id="logs">Carregando...</pre>
+  <div class="header">
+    <div class="header-left">
+      <a href="/" class="back-button">← Voltar</a>
+      <h1 class="title">Logs em Tempo Real</h1>
+    </div>
+    <div class="controls">
+      <div class="status-indicator">
+        <div class="status-dot"></div>
+        <span>Conectado</span>
+      </div>
+      <button class="control-button" id="pauseBtn">⏸️ Pausar</button>
+      <button class="control-button" id="clearBtn">🗑️ Limpar</button>
+      <button class="control-button" id="exportBtn">💾 Exportar</button>
+    </div>
+  </div>
+
+  <div class="filter-bar">
+    <span class="filter-label">Filtrar:</span>
+    <label class="filter-checkbox">
+      <input type="checkbox" id="filterInfo" checked>
+      <span>INFO</span>
+    </label>
+    <label class="filter-checkbox">
+      <input type="checkbox" id="filterWarning" checked>
+      <span>WARNING</span>
+    </label>
+    <label class="filter-checkbox">
+      <input type="checkbox" id="filterError" checked>
+      <span>ERROR</span>
+    </label>
+    <label class="filter-checkbox">
+      <input type="checkbox" id="filterSuccess" checked>
+      <span>SUCCESS</span>
+    </label>
+  </div>
+
+  <div class="logs-container">
+    <div class="logs-content" id="logsContent">
+      <div class="loading-message">
+        Carregando logs<span class="loading-dots">...</span>
+      </div>
+    </div>
+    <button class="scroll-to-bottom" id="scrollToBottom">⬇️</button>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stats-item">
+      <span>Total de logs:</span>
+      <span id="totalLogs">0</span>
+    </div>
+    <div class="stats-item">
+      <span>Erros:</span>
+      <span id="errorCount">0</span>
+    </div>
+    <div class="stats-item">
+      <span>Última atualização:</span>
+      <span id="lastUpdate">--:--:--</span>
+    </div>
+  </div>
+
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
-    const logArea = document.getElementById('logs');
+    const logsContent = document.getElementById('logsContent');
+    const scrollToBottomBtn = document.getElementById('scrollToBottom');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const exportBtn = document.getElementById('exportBtn');
+    
+    let isPaused = false;
+    let logCount = 0;
+    let errorCount = 0;
+    let logs = [];
+    let filters = {
+      info: true,
+      warning: true,
+      error: true,
+      success: true
+    };
 
-    socket.on('log', (msg) => {
-      logArea.innerText += msg + '\n';
-      logArea.scrollTop = logArea.scrollHeight;
+    // Função para determinar o tipo de log baseado no conteúdo
+    function getLogType(message) {
+      const msg = message.toLowerCase();
+      if (msg.includes('error') || msg.includes('erro') || msg.includes('falha')) return 'error';
+      if (msg.includes('warning') || msg.includes('aviso') || msg.includes('atenção')) return 'warning';
+      if (msg.includes('success') || msg.includes('sucesso') || msg.includes('concluído')) return 'success';
+      return 'info';
+    }
+
+    // Função para formatar timestamp
+    function formatTimestamp() {
+      const now = new Date();
+      return now.toLocaleTimeString('pt-BR');
+    }
+
+    // Função para criar entry de log
+    function createLogEntry(message, type = 'info') {
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      
+      const timestamp = formatTimestamp();
+      const levelText = type.toUpperCase();
+      
+      entry.innerHTML = `
+        <span class="log-timestamp">${timestamp}</span>
+        <span class="log-level ${type}">${levelText}</span>
+        <span class="log-message">${message}</span>
+      `;
+      
+      return entry;
+    }
+
+    // Função para adicionar log
+    function addLog(message) {
+      if (isPaused) return;
+      
+      const type = getLogType(message);
+      const entry = createLogEntry(message, type);
+      
+      // Verificar filtros
+      if (!filters[type]) {
+        entry.style.display = 'none';
+      }
+      
+      // Remover mensagem de loading se ainda estiver presente
+      const loadingMsg = logsContent.querySelector('.loading-message');
+      if (loadingMsg) {
+        loadingMsg.remove();
+      }
+      
+      logsContent.appendChild(entry);
+      logs.push({ message, type, timestamp: new Date() });
+      
+      // Atualizar contadores
+      logCount++;
+      if (type === 'error') errorCount++;
+      
+      // Manter apenas os últimos 1000 logs para performance
+      if (logs.length > 1000) {
+        const firstEntry = logsContent.querySelector('.log-entry');
+        if (firstEntry) firstEntry.remove();
+        logs.shift();
+      }
+      
+      // Auto scroll se estiver próximo do final
+      const { scrollTop, scrollHeight, clientHeight } = logsContent;
+      if (scrollHeight - scrollTop - clientHeight < 100) {
+        logsContent.scrollTop = scrollHeight;
+      }
+      
+      updateStats();
+      updateScrollButton();
+    }
+
+    // Função para atualizar estatísticas
+    function updateStats() {
+      document.getElementById('totalLogs').textContent = logCount;
+      document.getElementById('errorCount').textContent = errorCount;
+      document.getElementById('lastUpdate').textContent = formatTimestamp();
+    }
+
+    // Função para atualizar botão de scroll
+    function updateScrollButton() {
+      const { scrollTop, scrollHeight, clientHeight } = logsContent;
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 200;
+      scrollToBottomBtn.classList.toggle('visible', !isNearBottom);
+    }
+
+    // Função para aplicar filtros
+    function applyFilters() {
+      const entries = logsContent.querySelectorAll('.log-entry');
+      entries.forEach(entry => {
+        const type = entry.className.split(' ')[1];
+        entry.style.display = filters[type] ? 'block' : 'none';
+      });
+    }
+
+    // Event listeners
+    socket.on('log', (message) => {
+      addLog(message);
     });
+
+    socket.on('connect', () => {
+      document.querySelector('.status-indicator span').textContent = 'Conectado';
+      document.querySelector('.status-dot').style.background = '#48bb78';
+    });
+
+    socket.on('disconnect', () => {
+      document.querySelector('.status-indicator span').textContent = 'Desconectado';
+      document.querySelector('.status-dot').style.background = '#ef4444';
+    });
+
+    // Controles
+    pauseBtn.addEventListener('click', () => {
+      isPaused = !isPaused;
+      pauseBtn.innerHTML = isPaused ? '▶️ Retomar' : '⏸️ Pausar';
+      pauseBtn.classList.toggle('active', isPaused);
+    });
+
+    clearBtn.addEventListener('click', () => {
+      if (confirm('Tem certeza que deseja limpar todos os logs?')) {
+        logsContent.innerHTML = '';
+        logs = [];
+        logCount = 0;
+        errorCount = 0;
+        updateStats();
+      }
+    });
+
+    exportBtn.addEventListener('click', () => {
+      const logText = logs.map(log => 
+        `[${log.timestamp.toLocaleString('pt-BR')}] ${log.type.toUpperCase()}: ${log.message}`
+      ).join('\n');
+      
+      const blob = new Blob([logText], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `logs_${new Date().toISOString().split('T')[0]}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    scrollToBottomBtn.addEventListener('click', () => {
+      logsContent.scrollTop = logsContent.scrollHeight;
+    });
+
+    // Filtros
+    ['info', 'warning', 'error', 'success'].forEach(type => {
+      const checkbox = document.getElementById(`filter${type.charAt(0).toUpperCase() + type.slice(1)}`);
+      checkbox.addEventListener('change', () => {
+        filters[type] = checkbox.checked;
+        applyFilters();
+      });
+    });
+
+    // Scroll listener
+    logsContent.addEventListener('scroll', updateScrollButton);
+
+    // Simular alguns logs iniciais para demonstração
+    setTimeout(() => {
+      addLog('Sistema iniciado com sucesso');
+      addLog('Conectando ao servidor gRPC...');
+      addLog('Conexão estabelecida com sucesso');
+      addLog('Monitoramento de frota ativo');
+    }, 1000);
   </script>
 </body>
 </html>
