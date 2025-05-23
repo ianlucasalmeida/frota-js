@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Logs do Sistema</title>
+  <style>
+    body { font-family: monospace; padding: 1em; background: black; color: white; }
+    #logs { height: 90vh; overflow-y: scroll; }
+  </style>
+</head>
+<body>
+  <h1>Logs em Tempo Real</h1>
+  <pre id="logs">Carregando...</pre>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const logArea = document.getElementById('logs');
+
+    socket.on('log', (msg) => {
+      logArea.innerText += msg + '\n';
+      logArea.scrollTop = logArea.scrollHeight;
+    });
+  </script>
+</body>
+</html>

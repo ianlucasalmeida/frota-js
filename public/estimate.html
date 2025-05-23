@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Estimativa de Entrega</title>
+  <style>
+    body { font-family: sans-serif; padding: 2em; }
+    label { display: block; margin-top: 1em; }
+    input { width: 100%; padding: 0.5em; margin-top: 0.3em; }
+    button { margin-top: 1em; padding: 0.5em 1em; }
+    #result { margin-top: 2em; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Calcular Estimativa de Entrega</h1>
+  <label for="id">ID do Veículo:</label>
+  <input type="text" id="id" placeholder="ex: VEICULO_01" />
+
+  <label for="lat">Latitude Destino:</label>
+  <input type="number" step="any" id="lat" />
+
+  <label for="lon">Longitude Destino:</label>
+  <input type="number" step="any" id="lon" />
+
+  <button onclick="estimate()">Calcular</button>
+
+  <div id="result"></div>
+
+  <script>
+    async function estimate() {
+      const id = document.getElementById('id').value;
+      const lat = parseFloat(document.getElementById('lat').value);
+      const lon = parseFloat(document.getElementById('lon').value);
+
+      const res = await fetch('/api/estimate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, lat, lon })
+      });
+
+      const data = await res.json();
+      document.getElementById('result').innerText = `Tempo estimado: ${data.time}`;
+    }
+  </script>
+</body>
+</html>

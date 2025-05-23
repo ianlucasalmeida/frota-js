@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Simulação de Tráfego</title>
+  <style>
+    body { margin: 0; font-family: sans-serif; }
+    #map {
+      width: 100vw;
+      height: 100vh;
+      background-color: #e0f7fa;
+      position: relative;
+    }
+    .dot {
+      width: 15px;
+      height: 15px;
+      background: red;
+      border-radius: 50%;
+      position: absolute;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const map = document.getElementById('map');
+    const socket = io();
+
+    map.addEventListener('mousemove', (e) => {
+      const rect = map.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      const dot = document.createElement('div');
+      dot.className = 'dot';
+      dot.style.left = x + 'px';
+      dot.style.top = y + 'px';
+      map.appendChild(dot);
+
+      // Enviar dados via WebSocket para backend
+      socket.emit('mouseMove', {
+        id: 'VEICULO_01',
+        lat: y / window.innerHeight,
+        lon: x / window.innerWidth,
+        speed: 60,
+        status: 'moving'
+      });
+    });
+  </script>
+</body>
+</html>
