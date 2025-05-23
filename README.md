@@ -1,4 +1,4 @@
-# **🚛 Projeto Frota JS – Sistema de Gestão de Frota com gRPC**
+# **Projeto Frota JS – Sistema de Gestão de Frota com gRPC**
 
 Sistema distribuído simulando a gestão de frota veicular de uma empresa de logística, utilizando **gRPC** para comunicação eficiente entre os veículos e o centro de rastreamento central.
 
@@ -6,21 +6,21 @@ O objetivo é demonstrar como o uso de **streaming bidirecional** , chamadas un�
 
 ---
 
-## **🧩 Funcionalidades Implementadas**
+## **Funcionalidades Implementadas**
 
-*   ✅ Comunicação **bidirecional em tempo real** entre veículo e central (gRPC Streaming)
-*   ✅ Chamada **unária para estimativa de entrega**
-*   ✅ Simulação de múltiplos veículos com atualização contínua de posição
-*   ✅ Interface web com:
+*    Comunicação **bidirecional em tempo real** entre veículo e central (gRPC Streaming)
+*    Chamada **unária para estimativa de entrega**
+*    Simulação de múltiplos veículos com atualização contínua de posição
+*    Interface web com:
     *   Tela de tráfego (com movimento do mouse representando o veículo)
     *   Tela de logs em tempo real
     *   Tela de estimativa de tempo até destino
-*   ✅ Logs detalhados no terminal
-*   ✅ Suporte a múltiplos veículos com IDs únicos
+*    Logs detalhados no terminal
+*    Suporte a múltiplos veículos com IDs únicos
 
 ---
 
-## **🏗️ Arquitetura do Projeto**
+## **Arquitetura do Projeto**
 
 ### **Estrutura Geral**
 
@@ -41,21 +41,13 @@ frota-js/
 
 ---
 
-## **📐 Diagrama de Arquitetura (Mermaid)**
+## **Diagrama de Arquitetura (Mermaid)**
 
-graph TD  
-   A\[Veículo 1\] --> B\[(gRPC Streaming)\]  
-   C\[Veículo 2\] --> B  
-   D\[Sistema Central\] -->|Comandos| A & C  
-   E\[Interface Web\] --> F\[Servidor Express\]  
-   F --> G\[gRPC Unário: EstimateDelivery\]  
-   G --> D  
-   F \<--> H\[(WebSocket)\] -->|Logs em Tempo Real| E  
-   D --> H
+![alt text](image.png)
 
 ---
 
-## **🚗 Componentes do Sistema**
+## ** Componentes do Sistema**
 
 ### **1\. Serviço de Veículo (vehicle.js) – gRPC Client**
 
@@ -124,7 +116,7 @@ Fornece uma interface amigável para visualizar e interagir com o sistema:
 
 ---
 
-## **📦 Contrato de Comunicação – proto/frota.proto**
+## **Contrato de Comunicação – proto/frota.proto**
 
 Definição das interfaces e mensagens usadas pelo sistema:
 
@@ -162,7 +154,7 @@ message EstimateResponse {
 
 ---
 
-## **🚀 Como Executar o Projeto**
+## **Como Executar o Projeto**
 
 ### **Passo 1: Instale as dependências**
 
@@ -202,7 +194,7 @@ node app.js
 
 ---
 
-## **💡 Justificativa do Uso de gRPC**
+## **Justificativa do Uso de gRPC**
 
 O uso de **gRPC** neste projeto se mostrou essencial por atender diretamente aos requisitos funcionais e não funcionais do problema. Vamos analisar:
 
