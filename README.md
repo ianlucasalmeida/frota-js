@@ -47,7 +47,7 @@ frota-js/
 
 ---
 
-## ** Componentes do Sistema**
+## **Componentes do Sistema**
 
 ### **1\. Serviço de Veículo (vehicle.js) – gRPC Client**
 
